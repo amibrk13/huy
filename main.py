@@ -11,13 +11,18 @@ TIMEFRAMES = ["1m", "5m", "15m", "1h", "4h", "1d"]
 async def market():
     result = {}
     for symbol in SYMBOLS:
-        ticker = await get_ticker(symbol)
+        try:
+            ticker = await get_ticker(symbol)
+        except Exception as e:
+            ticker = {"error": str(e)}
         klines = {}
-        # Gather klines concurrently for all timeframes for this symbol
         kline_tasks = [get_kline(symbol, tf) for tf in TIMEFRAMES]
-        klines_results = await asyncio.gather(*kline_tasks)
-        for i, tf in enumerate(TIMEFRAMES):
-            klines[tf] = klines_results[i]
+        try:
+            klines_results = await asyncio.gather(*kline_tasks)
+            for i, tf in enumerate(TIMEFRAMES):
+                klines[tf] = klines_results[i]
+        except Exception as e:
+            klines = {"error": str(e)}
         result[symbol] = {
             "ticker": ticker,
             "klines": klines
